@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Card, Input, Button, Modal, Descriptions, Tag, Spin, message, Space, Typography } from 'antd'
-import { ThunderboltOutlined, SendOutlined } from '@ant-design/icons'
+import { Card, Input, Button, Modal, Descriptions, Tag, Spin, message, Space, Typography, List } from 'antd'
+import { ThunderboltOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 
 const { TextArea } = Input
@@ -13,7 +13,7 @@ interface SmartInputProps {
 export default function SmartInput({ onSaved }: SmartInputProps) {
   const [text, setText] = useState('')
   const [parsing, setParsing] = useState(false)
-  const [result, setResult] = useState<any>(null)
+  const [results, setResults] = useState<any[]>([])
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -21,7 +21,7 @@ export default function SmartInput({ onSaved }: SmartInputProps) {
   const handleParse = async () => {
     const trimmed = text.trim()
     if (!trimmed) {
-      message.warning('请输入内容，比如"今天午饭35元"')
+      message.warning('请输入内容')
       return
     }
 
@@ -36,16 +36,19 @@ export default function SmartInput({ onSaved }: SmartInputProps) {
         return
       }
 
-      // 用分类信息补全结果
-      const data = response.data
-      const cat = categories.find((c: any) => c.id === data.category_id)
-      const sub = data.subcategory_id ? categories.find((c: any) => c.id === data.subcategory_id) : null
-      setResult({
-        ...data,
-        category_name: cat?.name || '未知',
-        category_icon: cat?.icon || '📌',
-        subcategory_name: sub?.name || null,
+      // 用分类信息补全每条结果
+      const items = (response.data as any[]).map((item: any) => {
+        const cat = categories.find((c: any) => c.id === item.category_id)
+        const sub = item.subcategory_id ? categories.find((c: any) => c.id === item.subcategory_id) : null
+        return {
+          ...item,
+          category_name: cat?.name || '未知',
+          category_icon: cat?.icon || '📌',
+          subcategory_name: sub?.name || null,
+        }
       })
+
+      setResults(items)
       setConfirmOpen(true)
     } catch (err: any) {
       setError('解析失败：' + (err.message || '网络错误'))
@@ -54,18 +57,20 @@ export default function SmartInput({ onSaved }: SmartInputProps) {
     }
   }
 
-  const handleSave = async () => {
+  const handleSaveAll = async () => {
     setSaving(true)
     try {
-      await window.electronAPI.addTransaction({
-        amount: result.amount,
-        type: result.type,
-        categoryId: result.category_id,
-        subcategoryId: result.subcategory_id || null,
-        date: result.date,
-        note: result.note || '',
-      })
-      message.success('保存成功！')
+      for (const item of results) {
+        await window.electronAPI.addTransaction({
+          amount: item.amount,
+          type: item.type,
+          categoryId: item.category_id,
+          subcategoryId: item.subcategory_id || null,
+          date: item.date,
+          note: item.note || '',
+        })
+      }
+      message.success(`已保存 ${results.length} 条记录！`)
       setText('')
       setConfirmOpen(false)
       onSaved()
@@ -83,22 +88,20 @@ export default function SmartInput({ onSaved }: SmartInputProps) {
     }
   }
 
+  const totalAmount = results.reduce((s, r) => s + (r.amount || 0), 0)
+
   return (
     <>
-      <Card
-        style={{ marginBottom: 16 }}
-        bodyStyle={{ padding: '20px 24px' }}
-      >
+      <Card style={{ marginBottom: 16 }} bodyStyle={{ padding: '20px 24px' }}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
           <TextArea
             value={text}
             onChange={e => { setText(e.target.value); setError(null) }}
             onKeyDown={handleKeyDown}
-            placeholder={'直接输入就行，比如：\n"今天午饭花了35元"\n"收到工资8000"\n"打车去公司花了25块"'}
+            placeholder={'直接输入，可以一次说多条：\n"午饭35元，打车20，买书花了50"\n"收到工资8000，兼职收入500"\n"聚餐请客花了200块，看电影80"'}
             rows={3}
             style={{ flex: 1, fontSize: 15 }}
             disabled={parsing}
-            autoFocus
           />
           <Button
             type="primary"
@@ -107,11 +110,9 @@ export default function SmartInput({ onSaved }: SmartInputProps) {
             loading={parsing}
             size="large"
             style={{
-              height: 76,
-              minWidth: 100,
+              height: 76, minWidth: 100,
               background: 'linear-gradient(135deg, #667eea, #764ba2)',
-              border: 'none',
-              fontSize: 16,
+              border: 'none', fontSize: 16,
             }}
           >
             智能识别
@@ -122,51 +123,52 @@ export default function SmartInput({ onSaved }: SmartInputProps) {
         )}
         <div style={{ marginTop: 8 }}>
           <Text type="secondary" style={{ fontSize: 12 }}>
-            💡 提示：输入后按 Enter 快速识别，AI 会自动判断收入/支出并从已有分类中匹配
+            💡 一条消息可以包含多条记录，AI 会自动拆分。按 Enter 快速识别
           </Text>
         </div>
       </Card>
 
       {/* 确认弹窗 */}
       <Modal
-        title="🤖 AI 识别结果"
+        title={`🤖 AI 识别出 ${results.length} 条记录`}
         open={confirmOpen}
-        onOk={handleSave}
+        onOk={handleSaveAll}
         onCancel={() => setConfirmOpen(false)}
         confirmLoading={saving}
-        okText="确认并保存"
+        okText={`全部保存（共 ¥${totalAmount.toFixed(2)}）`}
         cancelText="取消"
-        width={440}
+        width={500}
       >
-        {result && (
-          <Descriptions column={1} size="large" bordered style={{ marginTop: 16 }}>
-            <Descriptions.Item label="类型">
-              <Tag color={result.type === 'income' ? 'green' : 'pink'} style={{ fontSize: 15 }}>
-                {result.type === 'income' ? '💰 收入' : '💸 支出'}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="金额">
-              <Text strong style={{ fontSize: 20, color: result.type === 'income' ? '#52c41a' : '#FF6B81' }}>
-                ¥{result.amount?.toFixed(2)}
-              </Text>
-            </Descriptions.Item>
-            <Descriptions.Item label="分类">
-              <Space>
-                <span style={{ fontSize: 22 }}>{result.category_icon}</span>
-                <span>{result.category_name}</span>
-                {result.subcategory_name && <Tag>{result.subcategory_name}</Tag>}
-              </Space>
-            </Descriptions.Item>
-            <Descriptions.Item label="日期">
-              {result.date} {dayjs(result.date).format('dddd')}
-            </Descriptions.Item>
-            {result.note && (
-              <Descriptions.Item label="备注">{result.note}</Descriptions.Item>
-            )}
-          </Descriptions>
-        )}
+        <List
+          dataSource={results}
+          style={{ marginTop: 8 }}
+          renderItem={(item: any, i: number) => (
+            <List.Item
+              key={i}
+              style={{ padding: '12px 0', borderBottom: '1px solid #f5f5f5' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
+                <Tag color={item.type === 'income' ? 'green' : 'pink'} style={{ fontSize: 13 }}>
+                  {item.type === 'income' ? '💰 收入' : '💸 支出'}
+                </Tag>
+                <span style={{ fontSize: 22 }}>{item.category_icon}</span>
+                <span style={{ flex: 1 }}>
+                  {item.category_name}
+                  {item.subcategory_name && <Tag style={{ marginLeft: 4 }}>{item.subcategory_name}</Tag>}
+                  {item.note && <Text type="secondary" style={{ marginLeft: 8, fontSize: 13 }}>{item.note}</Text>}
+                </span>
+                <Text strong style={{
+                  fontSize: 17, fontFamily: '"SF Mono","Consolas",monospace',
+                  color: item.type === 'income' ? '#52c41a' : '#FF6B81', whiteSpace: 'nowrap',
+                }}>
+                  {item.type === 'income' ? '+' : '-'}¥{item.amount?.toFixed(2)}
+                </Text>
+              </div>
+            </List.Item>
+          )}
+        />
         <div style={{ marginTop: 12, fontSize: 13, color: '#999' }}>
-          📌 如有偏差可手动修改后保存
+          📌 如有偏差可取消后手动输入
         </div>
       </Modal>
     </>
