@@ -258,9 +258,20 @@ async function parseTransactionText(text: string, categories: any[]): Promise<an
       return `  [id:${c.id}] ${c.icon} ${c.name}${children.length ? '（二级：' + children.map((s: any) => `[id:${s.id}]${s.name}`).join('、') + '）' : ''}`
     }).join('\n')
 
-  const today = new Date().toISOString().slice(0, 10)
+  const now = new Date()
+  const today = now.toISOString().slice(0, 10)
+  const yesterday = new Date(now.getTime() - 86400000).toISOString().slice(0, 10)
+  const beforeYesterday = new Date(now.getTime() - 172800000).toISOString().slice(0, 10)
 
   const prompt = `你是一个记账助手。用户会用自然语言描述收支，可能是一条或多条。你需要解析并返回 JSON 数组。
+
+## 日期参考
+- 今天 = ${today}
+- 昨天 = ${yesterday}
+- 前天 = ${beforeYesterday}
+- 如果用户说"上周X"，请推算到具体日期
+- 如果用户说"X月X日"或"X号"，用今年的该日期
+- 只有用户完全没有提时间时，才默认用 ${today}
 
 ## 可用分类（必须从中选择，不能自己编）
 
@@ -276,12 +287,12 @@ ${incomeCats}
 ## 要求
 1. 判断每条是支出(expense)还是收入(income)
 2. 从上面已有分类中选择最匹配的一级和二级分类（填 id）
-3. 提取金额、日期（默认今天 ${today}）、备注
-4. 用户可能一句话包含多条记录，如"吃饭60打车100"，要拆成两条
+3. 提取金额、日期（根据上面的日期参考换算）、备注
+4. 用户可能一句话包含多条记录，要拆分
 5. 如果分类不太确定，选最接近的
 
 ## 返回格式（必须是纯 JSON 数组，不要其他文字）
-[{"type":"expense","amount":60,"category_id":1,"subcategory_id":1,"date":"${today}","note":"吃饭"},{"type":"expense","amount":100,"category_id":2,"subcategory_id":7,"date":"${today}","note":"打车"}]`
+[{"type":"expense","amount":60,"category_id":1,"subcategory_id":1,"date":"${today}","note":"吃饭"}]`
 
   try {
     const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
