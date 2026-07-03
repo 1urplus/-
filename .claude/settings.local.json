@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(npx vite *)",
+      "Bash(npx electron-rebuild *)",
+      "Bash(rm -f 'C:\\\\Users\\\\18415/AppData/Roaming/tiantian-accounting/tiantian.db')",
+      "Bash(rm -f 'C:\\\\Users\\\\18415/AppData/Roaming/tiantian-accounting/tiantian.db-wal')",
+      "Bash(rm -f 'C:\\\\Users\\\\18415/AppData/Roaming/tiantian-accounting/tiantian.db-shm')",
+      "Bash(npm run *)",
+      "Bash(CSC_IDENTITY_AUTO_DISCOVERY=false npm run electron:build:win)",
+      "Bash(npx electron-builder *)",
+      "Bash(powershell -Command \"Compress-Archive -Path 'win-unpacked\\\\*' -DestinationPath '甜甜记账-Windows.zip' -Force\")",
+      "Bash(git add *)"
+    ]
+  }
+}

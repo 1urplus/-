@@ -1,0 +1,66 @@
+{
+  "name": "tiantian-accounting",
+  "version": "1.0.0",
+  "description": "甜甜记账 - 个人智能记账助手",
+  "author": "甜甜记账",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "electron:dev": "vite",
+    "electron:build": "vite build && electron-builder",
+    "electron:build:win": "vite build && electron-builder --win",
+    "electron:build:mac": "vite build && electron-builder --mac"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^5.3.0",
+    "@anthropic-ai/sdk": "^0.30.0",
+    "antd": "^5.20.0",
+    "better-sqlite3": "^11.0.0",
+    "dayjs": "^1.11.12",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "recharts": "^2.12.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "electron": "^31.3.0",
+    "electron-builder": "^24.13.3",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.0",
+    "vite-plugin-electron": "^0.28.7",
+    "vite-plugin-electron-renderer": "^0.14.5"
+  },
+  "build": {
+    "appId": "com.tiantian.accounting",
+    "productName": "甜甜记账",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": null,
+      "sign": null
+    },
+    "mac": {
+      "target": ["dmg"],
+      "icon": null,
+      "sign": null
+    },
+    "forceCodeSigning": false
+  }
+}
