@@ -86,11 +86,21 @@ const BUILTIN_EXPENSE_CATEGORIES = [
 ]
 
 const BUILTIN_INCOME_CATEGORIES = [
-  { name: '工资收入', icon: '💼', children: ['月薪', '年终奖', '绩效奖金', '补贴津贴'] },
-  { name: '兼职副业', icon: '💻', children: ['自由职业', '咨询费', '稿费版税', '零工收入'] },
-  { name: '投资理财', icon: '📈', children: ['股票基金', '利息收入', '房租收入', '分红'] },
-  { name: '红包转账', icon: '🧧', children: ['节日红包', '生日红包', '转账收入', '礼金'] },
-  { name: '其他收入', icon: '📥', children: ['退款返利', '报销', '二手卖出', '其他'] },
+  { name: '工资收入', icon: '💼', children: [
+    { name: '月薪', icon: '💵' }, { name: '年终奖', icon: '🎊' }, { name: '绩效奖金', icon: '🏆' }, { name: '补贴津贴', icon: '📋' }
+  ]},
+  { name: '兼职副业', icon: '💻', children: [
+    { name: '自由职业', icon: '✍️' }, { name: '咨询费', icon: '🗣️' }, { name: '稿费版税', icon: '📝' }, { name: '零工收入', icon: '🔧' }
+  ]},
+  { name: '投资理财', icon: '📈', children: [
+    { name: '股票基金', icon: '📊' }, { name: '利息收入', icon: '🏦' }, { name: '房租收入', icon: '🏘️' }, { name: '分红', icon: '💎' }
+  ]},
+  { name: '红包转账', icon: '🧧', children: [
+    { name: '节日红包', icon: '🎉' }, { name: '生日红包', icon: '🎂' }, { name: '转账收入', icon: '💳' }, { name: '礼金', icon: '🎁' }
+  ]},
+  { name: '其他收入', icon: '📥', children: [
+    { name: '退款返利', icon: '↩️' }, { name: '报销', icon: '🧾' }, { name: '二手卖出', icon: '♻️' }, { name: '其他', icon: '📌' }
+  ]},
 ]
 
 function seedCategories() {
@@ -120,7 +130,7 @@ function seedCategories() {
   }
 }
 
-function insertCategories(cats: { name: string; icon: string; children: string[] }[], type: string, baseSort: number) {
+function insertCategories(cats: { name: string; icon: string; children: (string | { name: string; icon: string })[] }[], type: string, baseSort: number) {
   const insertCat = db.prepare(
     'INSERT INTO categories (name, icon, parent_id, type, is_builtin, sort_order) VALUES (?, ?, ?, ?, 1, ?)'
   )
@@ -129,7 +139,9 @@ function insertCategories(cats: { name: string; icon: string; children: string[]
       const result = insertCat.run(cat.name, cat.icon, null, type, baseSort + i)
       const parentId = result.lastInsertRowid as number
       cat.children.forEach((child, j) => {
-        insertCat.run(child, '📌', parentId, type, (baseSort + i) * 100 + j)
+        const cName = typeof child === 'string' ? child : child.name
+        const cIcon = typeof child === 'string' ? '📌' : (child.icon || '📌')
+        insertCat.run(cName, cIcon, parentId, type, (baseSort + i) * 100 + j)
       })
     })
   })
