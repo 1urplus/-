@@ -98,7 +98,7 @@ export default function SmartInput({ onSaved }: SmartInputProps) {
             value={text}
             onChange={e => { setText(e.target.value); setError(null) }}
             onKeyDown={handleKeyDown}
-            placeholder={'直接输入，可以一次说多条：\n"午饭35元，打车20，买书花了50"\n"收到工资8000，兼职收入500"\n"聚餐请客花了200块，看电影80"'}
+            placeholder={'直接描述就行，比如："午饭35元，打车20，买书花了50"'}
             rows={3}
             style={{ flex: 1, fontSize: 15 }}
             disabled={parsing}
