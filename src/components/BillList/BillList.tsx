@@ -133,7 +133,7 @@ export default function BillList({ refreshKey, onEditExpense }: BillListProps) {
       }>
         {transactions.length > 0 ? (
           <Table dataSource={transactions} columns={columns} rowKey="id" loading={loading} size="middle"
-            pagination={{ defaultPageSize: 20, showSizeChanger: true, showTotal: (t) => `共 ${t} 条`, pageSizeOptions: ['10', '20', '50', '100'] }} />
+            pagination={{ defaultPageSize: 8, showSizeChanger: true, showTotal: (t) => `共 ${t} 条`, pageSizeOptions: ['8', '20', '50', '100'] }} />
         ) : (<Empty description="没有符合条件的记录" />)}
       </Card>
     </div>
