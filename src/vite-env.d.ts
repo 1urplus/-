@@ -14,6 +14,7 @@ interface ElectronAPI {
   getDailyStats: (startDate: string, endDate: string, type?: string) => Promise<any[]>
   getMonthlySummary: (year: string) => Promise<any[]>
   analyze: (data: { type: string; mode: string; expenses: any[]; categories: any[] }) => Promise<string>
+  parseText: (data: { text: string; categories: any[] }) => Promise<any>
   getAnalysisHistory: (limit?: number) => Promise<any[]>
   exportCSV: (filter?: any) => Promise<{ success: boolean; path?: string }>
   exportExcel: (filter?: any) => Promise<{ success: boolean; path?: string }>

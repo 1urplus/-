@@ -102,6 +102,11 @@ function registerIpcHandlers() {
     return getAnalysisHistory(limit ?? 10)
   })
 
+  // ---- AI 智能解析文本 ----
+  ipcMain.handle('ai:parseText', async (_e, data) => {
+    return await parseTransactionText(data.text, data.categories)
+  })
+
   // ---- 导出 ----
   ipcMain.handle('export:csv', async (_e, filter) => {
     const data = getTransactionsForExport(filter?.startDate, filter?.endDate, filter?.type) as any[]
@@ -228,6 +233,97 @@ ${expenseSummary}
       return '❌ 网络连接失败，请检查网络后重试。如果你在中国大陆，可能需要配置网络代理。'
     }
     return `❌ AI 分析出错：${err.message}`
+  }
+}
+
+// ====== AI 智能解析用户输入文本 ======
+async function parseTransactionText(text: string, categories: any[]): Promise<any> {
+  const apiKey = getSetting('deepseek_api_key')
+  if (!apiKey) {
+    return { error: '请先在设置页面填入 DeepSeek API Key' }
+  }
+
+  // 构建分类列表（含 id，AI 必须从已有分类中选择）
+  const expenseCats = categories
+    .filter((c: any) => c.parent_id === null && c.type === 'expense')
+    .map((c: any) => {
+      const children = categories.filter((s: any) => s.parent_id === c.id)
+      return `  [id:${c.id}] ${c.icon} ${c.name}${children.length ? '（二级：' + children.map((s: any) => `[id:${s.id}]${s.name}`).join('、') + '）' : ''}`
+    }).join('\n')
+
+  const incomeCats = categories
+    .filter((c: any) => c.parent_id === null && c.type === 'income')
+    .map((c: any) => {
+      const children = categories.filter((s: any) => s.parent_id === c.id)
+      return `  [id:${c.id}] ${c.icon} ${c.name}${children.length ? '（二级：' + children.map((s: any) => `[id:${s.id}]${s.name}`).join('、') + '）' : ''}`
+    }).join('\n')
+
+  const today = new Date().toISOString().slice(0, 10)
+
+  const prompt = `你是一个记账助手。用户会用自然语言描述一笔收支，你需要解析并返回 JSON。
+
+## 可用分类（必须从中选择，不能自己编）
+
+支出分类：
+${expenseCats}
+
+收入分类：
+${incomeCats}
+
+## 用户输入
+"${text}"
+
+## 要求
+1. 判断是支出(expense)还是收入(income)
+2. 从上面已有分类中选择最匹配的一级和二级分类（填 id）
+3. 提取金额（数字）、日期（默认今天 ${today}）、备注
+4. 如果用户没提日期，用 "${today}"
+5. 如果分类不太确定，选最接近的
+
+## 返回格式（必须是纯 JSON，不要其他文字）
+{"type":"expense","amount":35.5,"category_id":1,"subcategory_id":3,"date":"${today}","note":"午饭"}`
+
+  try {
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        max_tokens: 300,
+        temperature: 0.1,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    })
+
+    if (!response.ok) {
+      return { error: `API 请求失败 (HTTP ${response.status})` }
+    }
+
+    const data = await response.json()
+    const rawText = data.choices?.[0]?.message?.content || ''
+
+    // 清理 AI 返回的 JSON（去掉可能的 markdown 包裹）
+    const jsonStr = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+    const parsed = JSON.parse(jsonStr)
+
+    // 验证分类 id 是否存在
+    const validIds = categories.map((c: any) => c.id)
+    if (!validIds.includes(parsed.category_id)) {
+      return { error: `AI 返回了无效分类 id: ${parsed.category_id}` }
+    }
+    if (parsed.subcategory_id && !validIds.includes(parsed.subcategory_id)) {
+      parsed.subcategory_id = null  // 忽略无效的二级分类
+    }
+
+    return { success: true, data: parsed }
+  } catch (err: any) {
+    if (err instanceof SyntaxError) {
+      return { error: 'AI 返回格式异常，请换种说法试试' }
+    }
+    return { error: `解析失败：${err.message}` }
   }
 }
 

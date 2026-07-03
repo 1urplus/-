@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Row, Col, Card, Statistic, Table, Typography, Button, Empty, Tag } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { formatAmount } from '../../utils/format'
+import SmartInput from '../SmartInput/SmartInput'
 
 const { Title, Text } = Typography
 
@@ -89,6 +90,8 @@ export default function Dashboard({ refreshKey, onAddExpense }: DashboardProps) 
           </Card>
         </Col>
       </Row>
+
+      <SmartInput onSaved={loadData} />
 
       <Card title="📋 最近记录" extra={<Button type="primary" icon={<PlusOutlined />} onClick={onAddExpense}>记一笔</Button>}>
         {transactions.length > 0 ? (

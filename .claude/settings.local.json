@@ -12,7 +12,8 @@
       "Bash(CSC_IDENTITY_AUTO_DISCOVERY=false npm run electron:build:win)",
       "Bash(npx electron-builder *)",
       "Bash(powershell -Command \"Compress-Archive -Path 'win-unpacked\\\\*' -DestinationPath '甜甜记账-Windows.zip' -Force\")",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit -m '初始化项目：甜甜记账 v1.0 *)"
     ]
   }
 }

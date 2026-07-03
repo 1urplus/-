@@ -34,6 +34,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // AI
   analyze: (data: { type: string; mode: string; expenses: any[]; categories: any[] }) =>
     ipcRenderer.invoke('ai:analyze', data),
+  parseText: (data: { text: string; categories: any[] }) =>
+    ipcRenderer.invoke('ai:parseText', data),
   getAnalysisHistory: (limit?: number) =>
     ipcRenderer.invoke('ai:getHistory', limit),
 
