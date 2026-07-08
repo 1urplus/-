@@ -53,8 +53,10 @@ export default function SnakeGame() {
   const [gameState, setGameState] = useState<'idle' | 'playing' | 'over'>('idle')
   const [score, setScore] = useState(0)
   const [highScore, setHighScore] = useState(() => {
-    const saved = localStorage.getItem('snake_high_score')
-    return saved ? parseInt(saved, 10) : 0
+    try {
+      const saved = localStorage.getItem('snake_high_score')
+      return saved ? parseInt(saved, 10) : 0
+    } catch { return 0 }
   })
 
   // 绘制函数
@@ -130,12 +132,14 @@ export default function SnakeGame() {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
     const actualScore = scoreRef.current
     // 更新最高分
-    const saved = localStorage.getItem('snake_high_score')
-    const currentHigh = saved ? parseInt(saved, 10) : 0
-    if (actualScore > currentHigh) {
-      localStorage.setItem('snake_high_score', String(actualScore))
-      setHighScore(actualScore)
-    }
+    try {
+      const saved = localStorage.getItem('snake_high_score')
+      const currentHigh = saved ? parseInt(saved, 10) : 0
+      if (actualScore > currentHigh) {
+        localStorage.setItem('snake_high_score', String(actualScore))
+        setHighScore(actualScore)
+      }
+    } catch { /* localStorage 不可用时静默跳过 */ }
     setScore(actualScore)
     setGameState('over')
   }, [])
@@ -276,11 +280,12 @@ export default function SnakeGame() {
           background: 'rgba(0,0,0,0.5)', display: 'flex',
           alignItems: 'center', justifyContent: 'center',
           borderRadius: 8, zIndex: 10, flexDirection: 'column', gap: 8,
+          pointerEvents: 'none',
         }}>
-          <div style={{ color: '#fff', fontSize: 32, fontWeight: 'bold' }}>游戏结束</div>
-          <div style={{ color: '#FF6B81', fontSize: 20 }}>得分：{score}</div>
+          <div style={{ color: '#fff', fontSize: 32, fontWeight: 'bold', pointerEvents: 'auto' }}>游戏结束</div>
+          <div style={{ color: '#FF6B81', fontSize: 20, pointerEvents: 'auto' }}>得分：{score}</div>
           {score >= highScore && score > 0 && (
-            <div style={{ color: '#FFD700', fontSize: 18 }}>🎉 新纪录！</div>
+            <div style={{ color: '#FFD700', fontSize: 18, pointerEvents: 'auto' }}>🎉 新纪录！</div>
           )}
         </div>
       )}
@@ -292,9 +297,10 @@ export default function SnakeGame() {
           background: 'rgba(0,0,0,0.4)', display: 'flex',
           alignItems: 'center', justifyContent: 'center',
           borderRadius: 8, zIndex: 10, flexDirection: 'column', gap: 8,
+          pointerEvents: 'none',
         }}>
-          <div style={{ color: '#FF6B81', fontSize: 36 }}>🐍</div>
-          <div style={{ color: '#fff', fontSize: 20 }}>点击按钮或按空格键开始</div>
+          <div style={{ color: '#FF6B81', fontSize: 36, pointerEvents: 'auto' }}>🐍</div>
+          <div style={{ color: '#fff', fontSize: 20, pointerEvents: 'auto' }}>点击按钮或按空格键开始</div>
         </div>
       )}
     </Card>

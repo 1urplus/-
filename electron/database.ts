@@ -68,9 +68,9 @@ function initTables() {
 
 // ====== 迁移旧表（兼容已存在的数据库） ======
 function migrateTables() {
-  try { db.exec(`ALTER TABLE categories ADD COLUMN type TEXT DEFAULT 'expense'`) } catch (_) {}
-  try { db.exec(`ALTER TABLE expenses ADD COLUMN type TEXT NOT NULL DEFAULT 'expense'`) } catch (_) {}
-  try { db.exec(`CREATE INDEX IF NOT EXISTS idx_expenses_type ON expenses(type)`) } catch (_) {}
+  try { db.exec(`ALTER TABLE categories ADD COLUMN type TEXT DEFAULT 'expense'`) } catch (_) { /* 列已存在 */ }
+  try { db.exec(`ALTER TABLE expenses ADD COLUMN type TEXT NOT NULL DEFAULT 'expense'`) } catch (_) { /* 列已存在 */ }
+  try { db.exec(`CREATE INDEX IF NOT EXISTS idx_expenses_type ON expenses(type)`) } catch (err) { console.error('[DB] 索引创建失败:', err) }
 }
 
 // ====== 内置分类数据 ======
