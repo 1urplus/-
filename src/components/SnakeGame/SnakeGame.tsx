@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { Card, Button, Space, Statistic } from 'antd'
-import { TrophyOutlined, ReloadOutlined, PlayCircleOutlined } from '@ant-design/icons'
+import { Card, Button, Statistic } from 'antd'
+import { TrophyOutlined, PlayCircleOutlined } from '@ant-design/icons'
 
 type Direction = 'UP' | 'DOWN' | 'LEFT' | 'RIGHT'
 interface Position { x: number; y: number }
@@ -21,13 +21,23 @@ const INITIAL_SNAKE: Position[] = [
 ]
 
 function randomFood(snake: Position[]): Position {
-  while (true) {
+  // 尝试随机查找，最多 1000 次后改为线性扫描
+  for (let tries = 0; tries < 1000; tries++) {
     const food = {
       x: Math.floor(Math.random() * COLS),
       y: Math.floor(Math.random() * ROWS),
     }
     if (!snake.some(s => s.x === food.x && s.y === food.y)) return food
   }
+  // 兜底：线性扫描空位
+  const occupied = new Set(snake.map(s => `${s.x},${s.y}`))
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      if (!occupied.has(`${x},${y}`)) return { x, y }
+    }
+  }
+  // 没有空位（棋盘满），返回任意位置
+  return { x: 0, y: 0 }
 }
 
 export default function SnakeGame() {
@@ -38,6 +48,7 @@ export default function SnakeGame() {
   const foodRef = useRef<Position>(randomFood(INITIAL_SNAKE))
   const timerRef = useRef<number | null>(null)
   const speedRef = useRef<number>(INITIAL_SPEED)
+  const scoreRef = useRef(0)                             // 分数用 ref 避免闭包过期
 
   const [gameState, setGameState] = useState<'idle' | 'playing' | 'over'>('idle')
   const [score, setScore] = useState(0)
@@ -114,6 +125,27 @@ export default function SnakeGame() {
     ctx.beginPath(); ctx.arc(e2x, e2y, 2, 0, Math.PI * 2); ctx.fill()
   }, [])
 
+  // 结束游戏（通过 ref 读取分数，避免闭包过期）
+  const endGame = useCallback(() => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
+    const actualScore = scoreRef.current
+    // 更新最高分
+    const saved = localStorage.getItem('snake_high_score')
+    const currentHigh = saved ? parseInt(saved, 10) : 0
+    if (actualScore > currentHigh) {
+      localStorage.setItem('snake_high_score', String(actualScore))
+      setHighScore(actualScore)
+    }
+    setScore(actualScore)
+    setGameState('over')
+  }, [])
+
+  // 更新分数（同时更新 ref 和 state）
+  const addScore = useCallback((points: number) => {
+    scoreRef.current += points
+    setScore(scoreRef.current)
+  }, [])
+
   // 游戏循环
   const gameLoop = useCallback(() => {
     directionRef.current = nextDirectionRef.current
@@ -145,46 +177,30 @@ export default function SnakeGame() {
     // 吃到食物
     if (newHead.x === foodRef.current.x && newHead.y === foodRef.current.y) {
       foodRef.current = randomFood(newSnake)
-      setScore(s => {
-        const newScore = s + 10
-        return newScore
-      })
+      addScore(10)
       // 加速
-      speedRef.current = Math.max(60, speedRef.current - SPEED_INCREMENT)
-      // 重启定时器以适应新速度
-      if (timerRef.current) clearInterval(timerRef.current)
-      timerRef.current = window.setInterval(gameLoop, speedRef.current)
+      const newSpeed = Math.max(60, speedRef.current - SPEED_INCREMENT)
+      if (newSpeed !== speedRef.current) {
+        speedRef.current = newSpeed
+        if (timerRef.current) clearInterval(timerRef.current)
+        timerRef.current = window.setInterval(gameLoop, speedRef.current)
+      }
     } else {
       newSnake.pop()
     }
 
     snakeRef.current = newSnake
     draw()
-  }, [draw])
-
-  // 结束游戏
-  function endGame() {
-    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
-    const finalScore = score + (snakeRef.current.length - 3) * 10
-    const actualScore = snakeRef.current.length > 3 ? finalScore : score
-    // 更新最高分
-    const saved = localStorage.getItem('snake_high_score')
-    const currentHigh = saved ? parseInt(saved, 10) : 0
-    if (actualScore > currentHigh) {
-      localStorage.setItem('snake_high_score', String(actualScore))
-      setHighScore(actualScore)
-    }
-    setScore(actualScore)
-    setGameState('over')
-  }
+  }, [draw, endGame, addScore])
 
   // 开始游戏
   const startGame = useCallback(() => {
-    snakeRef.current = [...INITIAL_SNAKE.map(p => ({ ...p }))]
+    snakeRef.current = INITIAL_SNAKE.map(p => ({ ...p }))
     foodRef.current = randomFood(snakeRef.current)
     directionRef.current = 'RIGHT'
     nextDirectionRef.current = 'RIGHT'
     speedRef.current = INITIAL_SPEED
+    scoreRef.current = 0
     setScore(0)
     setGameState('playing')
     draw()
@@ -195,10 +211,16 @@ export default function SnakeGame() {
   // 键盘控制
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
+      // 阻止方向键和空格滚动页面
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+        e.preventDefault()
+      }
+
       if (gameState !== 'playing') {
         if (e.key === 'Enter' || e.key === ' ') startGame()
         return
       }
+      // 检查 directionRef（已提交方向），防止与当前运动方向相反的输入
       const dir = directionRef.current
       switch (e.key) {
         case 'ArrowUp':    case 'w': case 'W': if (dir !== 'DOWN') nextDirectionRef.current = 'UP'; break
@@ -211,7 +233,7 @@ export default function SnakeGame() {
     return () => window.removeEventListener('keydown', handleKey)
   }, [gameState, startGame])
 
-  // 清理
+  // 清理定时器
   useEffect(() => {
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [])
@@ -219,7 +241,7 @@ export default function SnakeGame() {
   return (
     <Card
       title={<span>🐍 贪吃蛇</span>}
-      style={{ maxWidth: WIDTH + 48 + 240, margin: '0 auto' }}
+      style={{ position: 'relative', maxWidth: WIDTH + 48 + 240, margin: '0 auto' }}
       extra={
         <Button type="primary" icon={<PlayCircleOutlined />} onClick={startGame} disabled={gameState === 'playing'}>
           {gameState === 'idle' ? '开始游戏' : gameState === 'over' ? '再来一局' : '游戏中...'}
