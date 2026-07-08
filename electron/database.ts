@@ -2,13 +2,15 @@ import Database from 'better-sqlite3'
 import path from 'path'
 import { app } from 'electron'
 
-const DB_PATH = path.join(app.getPath('userData'), 'tiantian.db')
+function getDBPath(): string {
+  return path.join(app.getPath('userData'), 'tiantian.db')
+}
 
 let db: Database.Database
 
 export function getDatabase(): Database.Database {
   if (!db) {
-    db = new Database(DB_PATH)
+    db = new Database(getDBPath())
     db.pragma('journal_mode = WAL')
     db.pragma('foreign_keys = ON')
     initTables()
