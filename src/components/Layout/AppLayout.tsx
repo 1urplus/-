@@ -15,7 +15,7 @@ import {
 const { Sider, Content } = Layout
 const { Text } = Typography
 
-export type PageKey = 'dashboard' | 'billList' | 'statistics' | 'aiAnalysis' | 'categories' | 'settings'
+export type PageKey = 'dashboard' | 'billList' | 'statistics' | 'aiAnalysis' | 'categories' | 'settings' | 'snakeGame'
 
 const menuItems: { key: PageKey; icon: React.ReactNode; label: string }[] = [
   { key: 'dashboard', icon: <HomeOutlined />, label: '首页概览' },
@@ -23,6 +23,7 @@ const menuItems: { key: PageKey; icon: React.ReactNode; label: string }[] = [
   { key: 'statistics', icon: <BarChartOutlined />, label: '统计分析' },
   { key: 'aiAnalysis', icon: <RobotOutlined />, label: 'AI 分析' },
   { key: 'categories', icon: <FolderOutlined />, label: '分类管理' },
+  { key: 'snakeGame', icon: <span style={{ fontSize: 18 }}>🐍</span>, label: '贪吃蛇' },
   { key: 'settings', icon: <SettingOutlined />, label: '设置' },
 ]
 

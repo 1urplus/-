@@ -8,6 +8,7 @@ import AIAnalysis from './components/AIAnalysis/AIAnalysis'
 import CategoryManager from './components/CategoryManager/CategoryManager'
 import AddExpenseModal from './components/AddExpense/AddExpenseModal'
 import SettingsPage from './components/Settings/SettingsPage'
+import SnakeGame from './components/SnakeGame/SnakeGame'
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<PageKey>('dashboard')
@@ -58,6 +59,8 @@ export default function App() {
         return <AIAnalysis refreshKey={refreshKey} />
       case 'categories':
         return <CategoryManager refreshKey={refreshKey} />
+      case 'snakeGame':
+        return <SnakeGame />
       case 'settings':
         return <SettingsPage />
       default:
