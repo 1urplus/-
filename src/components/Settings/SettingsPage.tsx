@@ -157,7 +157,7 @@ export default function SettingsPage() {
       {/* 关于 */}
       <Card title={<><InfoCircleOutlined /> 关于</>}>
         <Descriptions column={1} size="small">
-          <Descriptions.Item label="应用名称">甜甜记账</Descriptions.Item>
+          <Descriptions.Item label="应用名称">洋洋记账</Descriptions.Item>
           <Descriptions.Item label="版本">1.0.0</Descriptions.Item>
           <Descriptions.Item label="技术栈">Electron + React + TypeScript</Descriptions.Item>
           <Descriptions.Item label="数据存储">本地 SQLite（数据完全存储在你的电脑上）</Descriptions.Item>

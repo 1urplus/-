@@ -18,7 +18,7 @@ function createWindow() {
     height: 800,
     minWidth: 900,
     minHeight: 600,
-    title: '甜甜记账',
+    title: '洋洋记账',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -119,7 +119,7 @@ function registerIpcHandlers() {
 
     const { filePath } = await dialog.showSaveDialog(mainWindow!, {
       title: '导出 CSV',
-      defaultPath: `甜甜记账_导出_${new Date().toISOString().slice(0, 10)}.csv`,
+      defaultPath: `洋洋记账_导出_${new Date().toISOString().slice(0, 10)}.csv`,
       filters: [{ name: 'CSV 文件', extensions: ['csv'] }]
     })
     if (filePath) {
@@ -144,7 +144,7 @@ function registerIpcHandlers() {
 
     const { filePath } = await dialog.showSaveDialog(mainWindow!, {
       title: '导出 Excel',
-      defaultPath: `甜甜记账_导出_${new Date().toISOString().slice(0, 10)}.xlsx`,
+      defaultPath: `洋洋记账_导出_${new Date().toISOString().slice(0, 10)}.xlsx`,
       filters: [{ name: 'Excel 文件', extensions: ['xlsx'] }]
     })
     if (filePath) {
@@ -187,7 +187,7 @@ async function performAIAnalysis(analysisType: string, mode: string, transaction
 
   let prompt: string
   if (analysisType === 'expense') {
-    prompt = `你是"甜甜"记账小助手。请用一段温暖的话（100字内）分析用户财务：
+    prompt = `你是"洋洋"记账小助手。请用一段温暖的话（100字内）分析用户财务：
 
 总收入【${totalIncome.toFixed(0)}元】 总支出【${totalExpense.toFixed(0)}元】 结余【${(totalIncome - totalExpense).toFixed(0)}元】
 ${incomeSummary ? '收入来源：' + incomeSummary : ''}
@@ -195,7 +195,7 @@ ${incomeSummary ? '收入来源：' + incomeSummary : ''}
 
 像朋友聊天，一段话概括收支状况、消费是否健康。重要数字用【数字】括起来。不要markdown格式，不要分点。`
   } else {
-    prompt = `你是"甜甜"省钱小助手。根据以下数据给省钱建议：
+    prompt = `你是"洋洋"省钱小助手。根据以下数据给省钱建议：
 
 月收入【${totalIncome.toFixed(0)}元】 月支出【${totalExpense.toFixed(0)}元】
 ${expenseSummary}

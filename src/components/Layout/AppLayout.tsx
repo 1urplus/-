@@ -66,7 +66,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ currentPage, onNavigate, onAddExp
               whiteSpace: 'nowrap',
             }}
           >
-            {collapsed ? '🍩' : '🍩 甜甜记账'}
+            {collapsed ? '🍩' : '🍩 洋洋记账'}
           </Text>
         </div>
 

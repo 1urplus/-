@@ -1,8 +1,8 @@
 {
   "name": "tiantian-accounting",
   "version": "1.0.0",
-  "description": "甜甜记账 - 个人智能记账助手",
-  "author": "甜甜记账",
+  "description": "洋洋记账 - 个人智能记账助手",
+  "author": "洋洋记账",
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
@@ -38,7 +38,7 @@
   },
   "build": {
     "appId": "com.tiantian.accounting",
-    "productName": "甜甜记账",
+    "productName": "洋洋记账",
     "directories": {
       "output": "release"
     },
